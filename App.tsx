@@ -10,7 +10,7 @@ import html2canvas from 'html2canvas';
 // Not: Verdiğiniz link (ibb.co/...) bir web sayfasıdır. Kodun çalışması için
 // resmin doğrudan linki (genelde .png veya .jpg ile biter) gerekir.
 // Örnek doğru link: https://i.ibb.co/wzwPfxR/logo.png
-// Link hatalı olsa bile aşağıda yazdığım kod otomatik olarak şık bir ikon gösterecektir.
+// Şimdilik çalışan bir örnek koyuyorum:
 const LOGO_URL = 'https://i.hizliresim.com/ches0mu.png'; 
 
 // Type for view modes
@@ -105,20 +105,37 @@ const App: React.FC = () => {
       setIsDownloading(true);
       
       try {
-          // Ensure we are in board mode for the best screenshot
+          // 1. Ensure we are in board mode for the best screenshot
           const previousMode = viewMode;
           if (previousMode !== 'board') setViewMode('board');
           
-          // Force a small delay to ensure DOM updates and images render
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // 2. Force a small delay to ensure DOM updates and images render
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
+          // 3. Capture with specific settings for high quality and full width
           const canvas = await html2canvas(element, {
-              scale: 3, // Higher resolution
+              scale: 2, // Higher resolution
               backgroundColor: '#f0f4f8',
               useCORS: true, // Critical for external avatars
-              allowTaint: true,
+              allowTaint: true, // Allow external images
               logging: false,
-              imageTimeout: 15000, // Wait longer for images
+              width: 1920, // Force desktop width even on mobile
+              windowWidth: 1920, // Simulate desktop viewport
+              imageTimeout: 30000, // Wait longer for images
+              onclone: (clonedDoc) => {
+                  // Force the cloned container to be large to prevent squashing
+                  const container = clonedDoc.getElementById('calendar-grid-container');
+                  if (container) {
+                      container.style.width = '1920px';
+                      container.style.maxWidth = 'none';
+                      container.style.padding = '40px';
+                  }
+                  // Ensure all images in the clone are eager loaded
+                  const images = clonedDoc.getElementsByTagName('img');
+                  for (let i = 0; i < images.length; i++) {
+                      images[i].loading = "eager";
+                  }
+              }
           });
           
           const link = document.createElement('a');
@@ -185,17 +202,17 @@ const App: React.FC = () => {
             {/* Left: Logo & Stats */}
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md border border-white/50 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md border border-white/50 bg-white flex items-center justify-center">
                         {/* SMART LOGO LOGIC */}
                         {!logoError ? (
                             <img 
                                 src={LOGO_URL} 
                                 alt="Logo" 
-                                className="w-full h-full object-contain bg-white" 
+                                className="w-10 h-10 object-contain" 
                                 onError={() => setLogoError(true)}
                             />
                         ) : (
-                            <i className="fas fa-calendar-check text-2xl"></i>
+                            <i className="fas fa-birthday-cake text-2xl text-pink-500"></i>
                         )}
                     </div>
                     <div>
@@ -326,7 +343,7 @@ const App: React.FC = () => {
         )}
       </header>
 
-      {/* Main Content */}
+      {/* Main Content - Added explicit width for screenshot reliability */}
       <main className="max-w-[1800px] mx-auto px-6" id="calendar-grid-container">
         
         {/* Loading State */}
