@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 // --- LOGO AYARI ---
 // Buraya kendi logo linkini yapıştır. (ImgBB, HizliResim vb.)
 // Örnek: 'https://i.ibb.co/GtvK0yq/my-logo.png'
-const LOGO_URL = 'https://hizliresim.com/ches0mu'; // Geçici pasta ikonu
+const LOGO_URL = 'https://ibb.co/zhMFS8v7'; // Geçici pasta ikonu
 
 // Type for view modes
 type ViewMode = 'board' | 'accordion';
