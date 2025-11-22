@@ -384,6 +384,14 @@ const App: React.FC = () => {
 
       </main>
 
+      {/* Footer / Ad Space (Bottom of site) */}
+      <footer className="max-w-[1800px] mx-auto px-6 py-8 mt-8 flex flex-col items-center justify-center">
+        <div className="w-full max-w-2xl min-h-[100px] rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 shadow-sm flex items-center justify-center overflow-hidden">
+            {/* This area is reserved for AdSense Auto Ads Anchor or Bottom Block */}
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Advertisement Area</span>
+        </div>
+      </footer>
+
       {/* Modal */}
       <AddBirthdayModal
         isOpen={isModalOpen}
