@@ -1,0 +1,5 @@
+{
+  "name": "Social Birthday Calendar",
+  "description": "A collaborative birthday calendar that integrates with Twitter/X profiles to display avatars and handle birthday wishes.",
+  "requestFramePermissions": []
+}
