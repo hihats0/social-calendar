@@ -7,9 +7,11 @@ import { subscribeToBirthdays, addBirthdayToCloud, clearAllBirthdays, isSupabase
 import html2canvas from 'html2canvas';
 
 // --- LOGO AYARI ---
-// Buraya kendi logo linkini yapıştır. (ImgBB, HizliResim vb.)
-// Örnek: 'https://i.ibb.co/GtvK0yq/my-logo.png'
-const LOGO_URL = 'https://ibb.co/zhMFS8v7'; // Geçici pasta ikonu
+// Not: Verdiğiniz link (ibb.co/...) bir web sayfasıdır. Kodun çalışması için
+// resmin doğrudan linki (genelde .png veya .jpg ile biter) gerekir.
+// Örnek doğru link: https://i.ibb.co/wzwPfxR/logo.png
+// Link hatalı olsa bile aşağıda yazdığım kod otomatik olarak şık bir ikon gösterecektir.
+const LOGO_URL = 'https://ibb.co/zhMFS8v7'; 
 
 // Type for view modes
 type ViewMode = 'board' | 'accordion';
@@ -26,6 +28,7 @@ const App: React.FC = () => {
   const [isDbReady, setIsDbReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   // Initial Setup & Subscription to Cloud
   useEffect(() => {
@@ -106,14 +109,16 @@ const App: React.FC = () => {
           const previousMode = viewMode;
           if (previousMode !== 'board') setViewMode('board');
           
-          // Wait a tick for render
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Force a small delay to ensure DOM updates and images render
+          await new Promise(resolve => setTimeout(resolve, 800));
 
           const canvas = await html2canvas(element, {
-              scale: 2, // High resolution
+              scale: 3, // Higher resolution
               backgroundColor: '#f0f4f8',
-              useCORS: true,
-              logging: false
+              useCORS: true, // Critical for external avatars
+              allowTaint: true,
+              logging: false,
+              imageTimeout: 15000, // Wait longer for images
           });
           
           const link = document.createElement('a');
@@ -124,7 +129,7 @@ const App: React.FC = () => {
           if (previousMode !== 'board') setViewMode(previousMode);
       } catch (err) {
           console.error("Screenshot failed", err);
-          alert("Could not create screenshot.");
+          alert("Could not create screenshot. Some external images might be blocking it.");
       } finally {
           setIsDownloading(false);
       }
@@ -180,9 +185,18 @@ const App: React.FC = () => {
             {/* Left: Logo & Stats */}
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md border border-white/50 bg-white">
-                        {/* LOGO IMAGE */}
-                        <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-1" />
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md border border-white/50 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                        {/* SMART LOGO LOGIC */}
+                        {!logoError ? (
+                            <img 
+                                src={LOGO_URL} 
+                                alt="Logo" 
+                                className="w-full h-full object-contain bg-white" 
+                                onError={() => setLogoError(true)}
+                            />
+                        ) : (
+                            <i className="fas fa-calendar-check text-2xl"></i>
+                        )}
                     </div>
                     <div>
                         <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-none">
@@ -213,7 +227,7 @@ const App: React.FC = () => {
                         <div className="relative">
                             <img 
                                 src={`https://unavatar.io/twitter/${nextBirthday.handle}`} 
-                                className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                                className="w-8 h-8 rounded-full border-2 border-white shadow-sm bg-slate-200"
                                 alt={nextBirthday.name}
                             />
                             <div className="absolute -bottom-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1 rounded-full border border-white">
