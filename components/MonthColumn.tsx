@@ -33,17 +33,17 @@ export const MonthColumn: React.FC<MonthColumnProps> = React.memo(({
   return (
     <div 
         className={`
-            glass-panel rounded-xl overflow-hidden transition-all duration-300 flex flex-col
+            glass-panel rounded-xl transition-all duration-300 flex flex-col
             ${isBoard ? 'h-full' : 'w-full mb-3'}
             ${!isBoard && !isOpen ? 'hover:bg-white/80 cursor-pointer' : ''}
         `}
-        // Removed heavy hover shadow/transform effects to fix freezing
+        // Removed overflow-hidden so tooltips and zoomed avatars aren't clipped
         onClick={!isBoard && !isOpen && onToggle ? onToggle : undefined}
     >
       {/* Header */}
       <div 
         className={`
-            flex items-center justify-between px-4 py-2 bg-gradient-to-r ${config.color} border-b border-white/50
+            flex items-center justify-between px-4 py-2 bg-gradient-to-r ${config.color} border-b border-white/50 rounded-t-xl
             ${!isBoard && 'cursor-pointer hover:brightness-95 transition-all'}
         `}
         onClick={!isBoard && onToggle ? (e) => { e.stopPropagation(); onToggle(); } : undefined}
@@ -77,7 +77,7 @@ export const MonthColumn: React.FC<MonthColumnProps> = React.memo(({
       {/* Grid Cells - Animated Height for Accordion */}
       <div 
         className={`
-            flex flex-col bg-white/40
+            flex flex-col bg-white/40 rounded-b-xl
             ${isOpen ? 'opacity-100' : 'hidden opacity-0'}
         `}
         // Removed complex max-height transition to improve performance
@@ -93,7 +93,7 @@ export const MonthColumn: React.FC<MonthColumnProps> = React.memo(({
         ))}
         
         {/* Footer spacer for aesthetic */}
-        <div className="h-2 bg-transparent"></div>
+        <div className="h-2 bg-transparent rounded-b-xl"></div>
       </div>
     </div>
   );

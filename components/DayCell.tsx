@@ -30,41 +30,28 @@ export const DayCell: React.FC<DayCellProps> = React.memo(({ dayIndex, monthInde
         {dayIndex}
       </div>
 
-      {/* Content Area - Vertical Stacking with Full Width/Height */}
-      <div className="flex-1 flex flex-col relative min-w-0">
+      {/* Content Area - Avatar Grid */}
+      <div className="flex-1 relative min-w-0 p-1.5">
         {daysBirthdays.length > 0 ? (
-          <>
-            {daysBirthdays.map((b, index) => (
+          <div className="flex flex-wrap gap-1.5 items-start justify-start w-full">
+            {daysBirthdays.map((b) => (
               <div 
                 key={b.id} 
-                className="relative flex-1 w-full min-h-[32px]" // Ensure minimum height so images don't collapse
+                className="relative group/avatar z-0 hover:z-10"
                 onMouseEnter={() => setHoveredId(b.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
-                {/* Full Block Item */}
-                <div className={`
-                    w-full h-full flex items-center px-3 gap-3 transition-all duration-200 cursor-pointer
-                    ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}
-                    hover:bg-blue-50 border-b border-dashed border-slate-100 last:border-0
-                `}>
-                  {/* Avatar - Fixed Size & No Shrink */}
-                  <div className="relative w-8 h-8 shrink-0 rounded-full overflow-hidden shadow-sm ring-1 ring-slate-200">
-                      <img
-                        src={`https://unavatar.io/twitter/${b.handle}`}
-                        alt={b.name}
-                        crossOrigin="anonymous"
-                        className="w-full h-full object-cover"
-                        style={{ display: 'block' }} // Fixes some canvas rendering issues
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${b.name}&background=random&size=64`;
-                        }}
-                      />
-                  </div>
-                  
-                  {/* Name - Truncated but legible */}
-                  <span className="text-sm font-semibold text-slate-700 truncate select-none pt-0.5">
-                    {b.name}
-                  </span>
+                {/* Avatar Circle - Directly Visible */}
+                <div className="w-9 h-9 rounded-full ring-2 ring-white shadow-sm overflow-hidden bg-slate-100 cursor-pointer transition-transform duration-200 hover:scale-110 hover:shadow-md hover:ring-blue-200">
+                    <img
+                      src={`https://unavatar.io/twitter/${b.handle}`}
+                      alt={b.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${b.name}&background=random&size=64`;
+                      }}
+                    />
                 </div>
                 
                 {/* Tooltip */}
@@ -74,19 +61,17 @@ export const DayCell: React.FC<DayCellProps> = React.memo(({ dayIndex, monthInde
               </div>
             ))}
             
-            {/* Minimal Add Button at bottom (only visible on hover) */}
+            {/* Hidden spacer to allow adding by clicking empty space */}
             <div 
                onClick={() => onAddClick(dayIndex, monthIndex)}
-               className="absolute bottom-0 left-0 right-0 h-1.5 hover:h-4 hover:bg-blue-100/80 cursor-pointer z-10 opacity-0 hover:opacity-100 transition-all flex items-center justify-center"
+               className="flex-grow min-h-[36px] cursor-pointer rounded-md hover:bg-slate-50/50 -z-0"
                title="Add another person"
-            >
-               <i className="fas fa-plus text-[8px] text-blue-400"></i>
-            </div>
-          </>
+            ></div>
+          </div>
         ) : (
           /* Empty state - Fills the rest */
           <div 
-            className="flex-1 w-full h-full cursor-pointer flex items-center justify-center hover:bg-slate-50/80 transition-colors group/empty"
+            className="flex-1 w-full h-full cursor-pointer flex items-center justify-center hover:bg-slate-50/80 transition-colors group/empty min-h-[50px]"
             onClick={() => onAddClick(dayIndex, monthIndex)}
           >
              <i className="fas fa-plus text-xs text-slate-200 opacity-0 group-hover/cell:opacity-100 transition-all transform scale-75 group-hover/cell:scale-100"></i>
