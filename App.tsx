@@ -4,6 +4,7 @@ import { MONTHS } from './constants';
 import { MonthColumn } from './components/MonthColumn';
 import { AddBirthdayModal } from './components/AddBirthdayModal';
 import { subscribeToBirthdays, addBirthdayToCloud, clearAllBirthdays, isSupabaseConfigured } from './services/supabase';
+import { PrintableCalendarTemplate } from './components/PrintableCalendarTemplate'; // Import new component
 import html2canvas from 'html2canvas';
 
 // --- LOGO AYARI ---
@@ -95,63 +96,45 @@ const App: React.FC = () => {
   };
   
   const handleDownloadScreenshot = async () => {
-      const element = document.getElementById('calendar-grid-container');
-      if (!element) return;
+      const element = document.getElementById('printable-calendar-export');
+      if (!element) {
+          console.error("Export element not found");
+          return;
+      }
       
       setIsDownloading(true);
       
       try {
-          const previousMode = viewMode;
-          
-          // Force board mode to see everything
-          if (previousMode !== 'board') {
-            setViewMode('board');
-          }
-          
-          // Increased delay to ensure all external images (avatars) are fully loaded
-          // and CORS handshakes are complete
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Increased delay to ensure proxy images (wsrv.nl) are fully loaded and cached
+          // This is critical for the images to appear in the canvas
+          await new Promise(resolve => setTimeout(resolve, 2500));
 
           const canvas = await html2canvas(element, {
-              scale: 2, // Higher resolution
-              backgroundColor: '#f0f4f8',
-              useCORS: true, // Critical for external avatars
-              allowTaint: false, // MUST be false to allow toDataURL to work
+              scale: 2, // High resolution
+              backgroundColor: '#ffffff',
+              useCORS: true, // Critical for images
+              allowTaint: false, // Must be false for toDataURL to work
               logging: false,
-              width: element.scrollWidth, 
-              height: element.scrollHeight,
-              windowWidth: 1920,
+              scrollX: 0,
+              scrollY: 0,
+              width: 1600, // Match the fixed width of the template
+              height: element.offsetHeight,
               onclone: (clonedDoc) => {
-                  // CRITICAL FIX: html2canvas struggles with backdrop-filter (glass effect)
-                  // We inject CSS to remove it and set solid backgrounds for the screenshot only
-                  const style = clonedDoc.createElement('style');
-                  style.innerHTML = `
-                    .glass-panel, .glass-header {
-                        backdrop-filter: none !important;
-                        -webkit-backdrop-filter: none !important;
-                        background: #ffffff !important;
-                        border: 1px solid #cbd5e1 !important;
-                        box-shadow: none !important;
-                    }
-                    /* Ensure images are block-level to avoid line-height gaps */
-                    img { display: block !important; }
-                    
-                    /* Force visibility */
-                    * { 
-                        opacity: 1 !important; 
-                        visibility: visible !important; 
-                    }
-                  `;
-                  clonedDoc.head.appendChild(style);
+                const clonedElement = clonedDoc.getElementById('printable-calendar-export');
+                if (clonedElement) {
+                    // Force visibility in clone just in case
+                    clonedElement.style.display = 'block';
+                    clonedElement.style.visibility = 'visible';
+                    clonedElement.style.opacity = '1';
+                }
               }
           });
           
           const link = document.createElement('a');
           link.download = 'Social-Birthday-Calendar.png';
-          link.href = canvas.toDataURL('image/png');
+          link.href = canvas.toDataURL('image/png', 1.0);
           link.click();
           
-          if (previousMode !== 'board') setViewMode(previousMode);
       } catch (err) {
           console.error("Screenshot failed", err);
           alert("Could not create screenshot. Please try again.");
@@ -202,6 +185,19 @@ const App: React.FC = () => {
       
       {/* Optimized Background */}
       <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none bg-slate-50/50"></div>
+
+      {/* --- OFF-SCREEN PRINTABLE TEMPLATE --- */}
+      {/* 
+          Positioning Strategy: 
+          Absolute positioning far top/left is safer for html2canvas than 'hidden' or 'fixed'.
+          It ensures the element is in the DOM and 'visible' to the renderer, just not to the user.
+      */}
+      <div style={{ position: 'absolute', top: '-10000px', left: '-10000px', pointerEvents: 'none' }}>
+         <PrintableCalendarTemplate 
+            id="printable-calendar-export" 
+            birthdays={birthdays} 
+         />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 glass-header px-6 py-3 mb-6 shadow-sm">
@@ -254,7 +250,6 @@ const App: React.FC = () => {
                                 src={`https://unavatar.io/twitter/${nextBirthday.handle}`} 
                                 className="w-8 h-8 rounded-full border-2 border-white shadow-sm bg-slate-200"
                                 alt={nextBirthday.name}
-                                crossOrigin="anonymous"
                             />
                             <div className="absolute -bottom-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1 rounded-full border border-white">
                                 {nextBirthday.daysAway === 0 ? 'TODAY' : `${nextBirthday.daysAway}d`}
@@ -291,21 +286,24 @@ const App: React.FC = () => {
                     )}
                 </div>
 
-                <div className="h-6 w-px bg-slate-200 mx-1"></div>
-
                 {/* Screenshot Button */}
                 <button 
                     onClick={handleDownloadScreenshot}
                     disabled={isDownloading}
-                    className="bg-slate-800 text-white hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
-                    title="Download Image"
+                    className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:brightness-110 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    title="Download Printable Calendar"
                 >
                     {isDownloading ? (
-                        <i className="fas fa-circle-notch fa-spin"></i>
+                        <>
+                            <i className="fas fa-circle-notch fa-spin"></i>
+                            <span className="hidden sm:inline">Processing...</span>
+                        </>
                     ) : (
-                        <i className="fas fa-camera"></i>
+                        <>
+                            <i className="fas fa-file-download"></i>
+                            <span className="hidden sm:inline">Download Calendar</span>
+                        </>
                     )}
-                    <span className="hidden sm:inline">Save Image</span>
                 </button>
 
                 {/* View Toggle */}
@@ -325,17 +323,6 @@ const App: React.FC = () => {
                         <i className="fas fa-list-ul text-xs"></i>
                     </button>
                 </div>
-
-                {/* Reset Button */}
-                {birthdays.length > 0 && (
-                    <button 
-                        onClick={handleReset}
-                        className="ml-2 text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"
-                        title="Reset All"
-                    >
-                        <i className="fas fa-trash-alt text-xs"></i>
-                    </button>
-                )}
             </div>
         </div>
         
