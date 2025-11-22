@@ -1,6 +1,130 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MONTHS } from '../constants';
 
+// --- 100+ Türk Örnek Kişi Veritabanı ---
+const TURKISH_EXAMPLES = [
+  // Tarihi & Efsanevi
+  { name: "Mustafa Kemal Atatürk", handle: "Ataturk" },
+  { name: "Barış Manço", handle: "BarisManco" },
+  { name: "Kemal Sunal", handle: "kemalsunalcom" },
+  { name: "Müslüm Gürses", handle: "MuslumBaba" },
+  { name: "Zeki Müren", handle: "ZekiMuren" },
+  { name: "Aşık Veysel", handle: "AsikVeysel" },
+  { name: "Adile Naşit", handle: "AdileNasit" },
+  { name: "Cüneyt Arkın", handle: "cuneytarkin" },
+  { name: "Şener Şen", handle: "senersen" },
+  { name: "Haluk Bilginer", handle: "halukbilginer" },
+
+  // Müzik
+  { name: "Tarkan", handle: "tarkan" },
+  { name: "Sezen Aksu", handle: "sezenaksu" },
+  { name: "Ajda Pekkan", handle: "AjdaPekkan" },
+  { name: "Aleyna Tilki", handle: "aleynatilki" },
+  { name: "Ceza", handle: "ceza_ed" },
+  { name: "Sagopa Kajmer", handle: "SagopaK" },
+  { name: "Hayko Cepkin", handle: "HAYKOCPQN" },
+  { name: "Mabel Matiz", handle: "mabelmatiz" },
+  { name: "Edis", handle: "edisgorgulu" },
+  { name: "Hadise", handle: "Hadise" },
+  { name: "Demet Akalın", handle: "DemetAkalin" },
+  { name: "Murat Boz", handle: "MuratBoz" },
+  { name: "Teoman", handle: "TeomanOfficial" },
+  { name: "Sıla Gençoğlu", handle: "silagencoglu" },
+  { name: "Kenan Doğulu", handle: "kenandogulu" },
+  { name: "Yalın", handle: "YalinOnline" },
+  { name: "Sertab Erener", handle: "sertaberener" },
+  { name: "Athena Gökhan", handle: "athenaofficial" },
+  { name: "Manga", handle: "maNgaMusic" },
+  { name: "Duman", handle: "DumanBand" },
+
+  // Komedi & Stand-up
+  { name: "Cem Yılmaz", handle: "CMYLMZ" },
+  { name: "Ata Demirer", handle: "atademirer" },
+  { name: "Tolga Çevik", handle: "TolgaCevik" },
+  { name: "Hasan Can Kaya", handle: "kayahasancan" },
+  { name: "Doğu Demirkol", handle: "dogudemirkol" },
+  { name: "Gülse Birsel", handle: "gulsebirsel" },
+  { name: "Feyyaz Yiğit", handle: "feyyazyigit" },
+  { name: "Kaan Sekban", handle: "KaanSekban" },
+  { name: "Yasemin Sakallıoğlu", handle: "yaseminsakalli" },
+  { name: "Gökbakar Şahan", handle: "sgokbakar" },
+
+  // Spor & Futbol
+  { name: "Fatih Terim", handle: "fatihterim" },
+  { name: "Arda Turan", handle: "ArdaTuran" },
+  { name: "Mesut Özil", handle: "M10" },
+  { name: "Burak Yılmaz", handle: "yilmazburak17" },
+  { name: "Cedi Osman", handle: "cediosman" },
+  { name: "Alperen Şengün", handle: "alperennsengun" },
+  { name: "Mete Gazoz", handle: "metegazoz" },
+  { name: "Eda Erdem", handle: "edaerdem14" },
+  { name: "Zehra Güneş", handle: "guneszehra" },
+  { name: "Ebrar Karakurt", handle: "karakurtebrar18" },
+  { name: "Rıdvan Dilmen", handle: "RidvanDilmen" },
+  { name: "Sergen Yalçın", handle: "SergenYalcin" },
+  { name: "Volkan Demirel", handle: "1VolkanDEMIREL" },
+  { name: "Alex de Souza", handle: "Alex10" },
+  { name: "Hagi", handle: "GheorgheHagi10" },
+
+  // İnternet Fenomeni & YouTuber
+  { name: "Enes Batur", handle: "enesbatur00" },
+  { name: "Orkun Işıtmak", handle: "orkunisitmak" },
+  { name: "Barış Özcan", handle: "BarisOzcan" },
+  { name: "Ruhi Çenet", handle: "ruhicenet" },
+  { name: "Reynmen", handle: "reynmen" },
+  { name: "Danla Bilic", handle: "danlabilic" },
+  { name: "Jahrein", handle: "jahreindota" },
+  { name: "Pqueen", handle: "pqueenn" },
+  { name: "Elraenn", handle: "elraenn" },
+  { name: "Wtcn", handle: "feritkw" },
+  { name: "Kendine Müzisyen", handle: "KendineMuzisyen" },
+  { name: "Unlost", handle: "unlostv" },
+  { name: "Mithrain", handle: "mithrainn" },
+  { name: "Oğuzhan Uğur", handle: "OguzhanUgur" },
+  { name: "Berkcan Güven", handle: "berkcanguven" },
+  { name: "Efe Uygaç", handle: "efeuygac" },
+  { name: "Mertcan Bahar", handle: "mertcanbahar" },
+  { name: "Deep Turkish Web", handle: "DeepTurkishWeb" },
+  { name: "Kafalar", handle: "kafalarresmi" },
+  { name: "Noluyo Ya", handle: "noluyoyaa" },
+
+  // Dizi Karakterleri (Kurgusal Handle) & Meme
+  { name: "Polat Alemdar", handle: "kurtlarvadisi" },
+  { name: "Bihter Ziyagil", handle: "bihterziyagil" },
+  { name: "Firdevs Yöreoğlu", handle: "firdevsyoreoglu" },
+  { name: "Behlül Haznedar", handle: "behlul" },
+  { name: "İsmail Abi", handle: "ismailabi" },
+  { name: "Erdal Bakkal", handle: "erdalbakkal" },
+  { name: "Burhan Altıntop", handle: "burhanaltintop" },
+  { name: "Gibi Yılmaz", handle: "gibi" },
+  { name: "Gibi İlkkan", handle: "ilkkan" },
+  { name: "Kuzey Tekinoğlu", handle: "kuzeyguney" },
+  { name: "Ramiz Dayı", handle: "ramizdayi" },
+  { name: "Ezel Bayraktar", handle: "ezel" },
+  { name: "Hürrem Sultan", handle: "muhtesemyuzyil" },
+  { name: "Süleyman Çakır", handle: "suleymancakir" },
+  { name: "Memati Baş", handle: "memati" },
+  
+  // Magazin & Şefler
+  { name: "Acun Ilıcalı", handle: "acunilicali" },
+  { name: "Nusret", handle: "nusr_ett" },
+  { name: "CZN Burak", handle: "CznBurak" },
+  { name: "Somer Sivrioğlu", handle: "somersivrioglu" },
+  { name: "Mehmet Yalçınkaya", handle: "chefmehmet" },
+  { name: "Danilo Zanna", handle: "DaniloZanna" },
+  { name: "Arda Türkmen", handle: "arda_turkmen" },
+  { name: "Vedat Milor", handle: "vedatmilor" },
+  { name: "Müge Anlı", handle: "mugeanli" },
+  { name: "Esra Erol", handle: "ErolEsra" },
+
+  // Absürt / Viral
+  { name: "Ajdar", handle: "ajdar" },
+  { name: "Köksal Baba", handle: "koksalbaba" },
+  { name: "Çikita Muz", handle: "ajdaranik" },
+  { name: "Diyar Pala", handle: "diyarpala" },
+  { name: "İsmail YK", handle: "ismailyk" }
+];
+
 interface AddBirthdayModalProps {
   isOpen: boolean;
   initialDate: { day: number; month: number } | null;
@@ -12,13 +136,18 @@ export const AddBirthdayModal: React.FC<AddBirthdayModalProps> = ({ isOpen, init
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [error, setError] = useState('');
+  const [randomExample, setRandomExample] = useState(TURKISH_EXAMPLES[0]);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  // Modal her açıldığında rastgele bir örnek seç
   useEffect(() => {
-    if (isOpen && nameInputRef.current) {
-      setTimeout(() => nameInputRef.current?.focus(), 100);
-    }
     if (isOpen) {
+      const randomIndex = Math.floor(Math.random() * TURKISH_EXAMPLES.length);
+      setRandomExample(TURKISH_EXAMPLES[randomIndex]);
+      
+      if (nameInputRef.current) {
+        setTimeout(() => nameInputRef.current?.focus(), 100);
+      }
       setName('');
       setHandle('');
       setError('');
@@ -47,6 +176,12 @@ export const AddBirthdayModal: React.FC<AddBirthdayModalProps> = ({ isOpen, init
 
   const monthName = MONTHS[initialDate.month].name;
 
+  // Placeholder'ı handle inputuna tıklandığında otomatik doldurmak için yardımcı fonksiyon (opsiyonel UX)
+  const applyExample = () => {
+      setName(randomExample.name);
+      setHandle(randomExample.handle);
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -59,14 +194,14 @@ export const AddBirthdayModal: React.FC<AddBirthdayModalProps> = ({ isOpen, init
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Decorative Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-6 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
             <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
             
             <div className="relative z-10 flex justify-between items-start">
                 <div>
                     <h2 className="text-2xl font-bold">Add Birthday</h2>
-                    <p className="text-blue-100 text-sm mt-1">Let's celebrate properly!</p>
+                    <p className="text-emerald-100 text-sm mt-1">Let's celebrate properly!</p>
                 </div>
                 <button onClick={onClose} className="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
                     <i className="fas fa-times"></i>
@@ -92,14 +227,14 @@ export const AddBirthdayModal: React.FC<AddBirthdayModalProps> = ({ isOpen, init
             <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5 ml-1">Full Name</label>
                 <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
                     <i className="fas fa-user"></i>
                 </div>
                 <input
                     ref={nameInputRef}
                     type="text"
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 rounded-xl outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300"
-                    placeholder="e.g. Taylor Swift"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-emerald-500 rounded-xl outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300"
+                    placeholder={`e.g. ${randomExample.name}`}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                 />
@@ -109,20 +244,29 @@ export const AddBirthdayModal: React.FC<AddBirthdayModalProps> = ({ isOpen, init
             <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5 ml-1">X (Twitter) Handle</label>
                 <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
                     <i className="fab fa-twitter"></i>
                 </div>
                 <input
                     type="text"
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 rounded-xl outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300"
-                    placeholder="taylorswift13"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-emerald-500 rounded-xl outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300"
+                    placeholder={randomExample.handle}
                     value={handle}
                     onChange={(e) => setHandle(e.target.value)}
                 />
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2 ml-1">
-                    Used to fetch the profile picture automatically.
-                </p>
+                <div className="flex justify-between items-start mt-2 ml-1">
+                    <p className="text-[11px] text-slate-400">
+                        Used to fetch the profile picture automatically.
+                    </p>
+                    <button 
+                        type="button" 
+                        onClick={applyExample}
+                        className="text-[10px] text-emerald-600 font-medium hover:underline cursor-pointer"
+                    >
+                        Use Example: {randomExample.name}
+                    </button>
+                </div>
             </div>
           </div>
 
@@ -143,7 +287,7 @@ export const AddBirthdayModal: React.FC<AddBirthdayModalProps> = ({ isOpen, init
             </button>
             <button
               type="submit"
-              className="flex-[2] px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5"
+              className="flex-[2] px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all transform hover:-translate-y-0.5"
             >
               Save Birthday
             </button>

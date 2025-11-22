@@ -3,9 +3,7 @@ import { Birthday } from './types';
 import { MONTHS } from './constants';
 import { MonthColumn } from './components/MonthColumn';
 import { AddBirthdayModal } from './components/AddBirthdayModal';
-
-// Simple random ID generator
-const generateId = () => Math.random().toString(36).substring(2, 15);
+import { subscribeToBirthdays, addBirthdayToCloud, clearAllBirthdays, isSupabaseConfigured } from './services/supabase';
 
 // Type for view modes
 type ViewMode = 'board' | 'accordion';
@@ -19,23 +17,31 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedMonthIndex, setExpandedMonthIndex] = useState<number | null>(null); // For accordion mode
+  const [isDbReady, setIsDbReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from LocalStorage
+  // Initial Setup & Subscription to Cloud
   useEffect(() => {
-    const saved = localStorage.getItem('social-birthday-calendar');
-    if (saved) {
-      try {
-        setBirthdays(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse birthdays", e);
-      }
+    // Check configuration
+    if (!isSupabaseConfigured()) {
+        setIsLoading(false);
+        // Fallback to local storage if not configured (optional legacy support)
+        const saved = localStorage.getItem('social-birthday-calendar');
+        if (saved) setBirthdays(JSON.parse(saved));
+        return;
     }
-  }, []);
 
-  // Save to LocalStorage
-  useEffect(() => {
-    localStorage.setItem('social-birthday-calendar', JSON.stringify(birthdays));
-  }, [birthdays]);
+    setIsDbReady(true);
+    
+    // Subscribe to Real-time updates (Supabase)
+    const unsubscribe = subscribeToBirthdays((data) => {
+        setBirthdays(data);
+        setIsLoading(false);
+    });
+
+    // Cleanup
+    return () => unsubscribe();
+  }, []);
 
   // Set current month expanded by default in accordion mode
   useEffect(() => {
@@ -49,19 +55,36 @@ const App: React.FC = () => {
   };
 
   const handleSaveBirthday = (name: string, handle: string, day: number, month: number) => {
-    const newBirthday: Birthday = {
-      id: generateId(),
-      name,
-      handle,
-      dayIndex: day,
-      monthIndex: month,
-    };
-    setBirthdays(prev => [...prev, newBirthday]);
+    if (isDbReady) {
+        addBirthdayToCloud({
+            name,
+            handle,
+            dayIndex: day,
+            monthIndex: month
+        });
+    } else {
+        // Legacy Local Save
+        const newBirthday: Birthday = {
+            id: Math.random().toString(36).substring(2, 15),
+            name,
+            handle,
+            dayIndex: day,
+            monthIndex: month,
+        };
+        const updated = [...birthdays, newBirthday];
+        setBirthdays(updated);
+        localStorage.setItem('social-birthday-calendar', JSON.stringify(updated));
+    }
   };
 
-  const handleReset = () => {
-    if (window.confirm("Are you sure you want to clear all calendar entries?")) {
-        setBirthdays([]);
+  const handleReset = async () => {
+    if (window.confirm("Are you sure you want to clear ALL calendar entries for EVERYONE? This cannot be undone.")) {
+        if (isDbReady) {
+            await clearAllBirthdays();
+        } else {
+            setBirthdays([]);
+            localStorage.removeItem('social-birthday-calendar');
+        }
     }
   };
 
@@ -107,9 +130,9 @@ const App: React.FC = () => {
       
       {/* Ambient Background */}
       <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-200/30 rounded-full blur-[120px] mix-blend-multiply"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-200/30 rounded-full blur-[120px] mix-blend-multiply"></div>
-          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-pink-200/20 rounded-full blur-[80px] mix-blend-multiply animate-pulse"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-200/30 rounded-full blur-[120px] mix-blend-multiply"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-200/30 rounded-full blur-[120px] mix-blend-multiply"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-cyan-200/20 rounded-full blur-[80px] mix-blend-multiply animate-pulse"></div>
       </div>
 
       {/* Header */}
@@ -119,14 +142,17 @@ const App: React.FC = () => {
             {/* Left: Logo & Stats */}
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-indigo-600 to-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
-                    <i className="fas fa-calendar-day"></i>
+                    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white w-10 h-10 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/20 relative">
+                        <i className="fas fa-calendar-alt"></i>
+                        {isDbReady && <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 border-2 border-white rounded-full" title="Supabase Connected"></div>}
                     </div>
                     <div>
                         <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-none">
                         Social Calendar
                         </h1>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-1">Interactive Birthday Tracker</p>
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-1 flex items-center gap-1">
+                            {isDbReady ? <span className="text-emerald-600"><i className="fas fa-bolt text-[8px]"></i> SUPABASE SYNC</span> : <span className="text-orange-500">LOCAL MODE</span>}
+                        </p>
                     </div>
                 </div>
                 
@@ -152,7 +178,9 @@ const App: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="hidden md:block text-xs text-slate-400 italic">No upcoming birthdays set</div>
+                    <div className="hidden md:block text-xs text-slate-400 italic">
+                        {isLoading ? 'Loading calendar...' : 'No upcoming birthdays set'}
+                    </div>
                 )}
             </div>
 
@@ -160,13 +188,13 @@ const App: React.FC = () => {
             <div className="flex items-center gap-3">
                 {/* Search Bar */}
                 <div className="relative group w-full lg:w-64">
-                    <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors text-xs"></i>
+                    <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors text-xs"></i>
                     <input 
                         type="text" 
                         placeholder="Search friends..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-slate-100/50 hover:bg-white focus:bg-white border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full bg-slate-100/50 hover:bg-white focus:bg-white border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                     />
                     {searchQuery && (
                         <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -181,14 +209,14 @@ const App: React.FC = () => {
                 <div className="bg-slate-100/80 p-1 rounded-lg flex gap-1 border border-slate-200">
                     <button 
                         onClick={() => setViewMode('board')}
-                        className={`w-8 h-7 rounded-md flex items-center justify-center transition-all ${viewMode === 'board' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`w-8 h-7 rounded-md flex items-center justify-center transition-all ${viewMode === 'board' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         title="Board View"
                     >
                         <i className="fas fa-border-all text-xs"></i>
                     </button>
                     <button 
                         onClick={() => setViewMode('accordion')}
-                        className={`w-8 h-7 rounded-md flex items-center justify-center transition-all ${viewMode === 'accordion' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`w-8 h-7 rounded-md flex items-center justify-center transition-all ${viewMode === 'accordion' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         title="List View"
                     >
                         <i className="fas fa-list-ul text-xs"></i>
@@ -200,20 +228,41 @@ const App: React.FC = () => {
                     <button 
                         onClick={handleReset}
                         className="ml-2 text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"
-                        title="Reset Calendar"
+                        title="Clear All Data"
                     >
                         <i className="fas fa-trash-alt text-xs"></i>
                     </button>
                 )}
             </div>
         </div>
+        
+        {/* Missing Config Warning */}
+        {!isDbReady && !isLoading && (
+             <div className="max-w-[1800px] mx-auto mt-2 bg-orange-50 border border-orange-200 rounded-lg p-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-orange-700 text-xs">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    <span>
+                        <strong>Supabase not configured!</strong> Changes are currently only saved to this browser. 
+                        To enable cloud sync, please configure <code>services/supabase.ts</code>.
+                    </span>
+                </div>
+             </div>
+        )}
       </header>
 
       {/* Main Content */}
       <main className="max-w-[1800px] mx-auto px-6">
         
+        {/* Loading State */}
+        {isLoading && (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <i className="fas fa-circle-notch fa-spin text-3xl mb-3 text-emerald-500"></i>
+                <p className="text-sm font-medium">Syncing with Supabase...</p>
+            </div>
+        )}
+
         {/* View: Board (Grid) */}
-        {viewMode === 'board' && (
+        {!isLoading && viewMode === 'board' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 animate-in fade-in duration-500">
             {Array.from({ length: 12 }).map((_, index) => (
                 <MonthColumn
@@ -228,7 +277,7 @@ const App: React.FC = () => {
         )}
 
         {/* View: Accordion (List) */}
-        {viewMode === 'accordion' && (
+        {!isLoading && viewMode === 'accordion' && (
             <div className="max-w-3xl mx-auto flex flex-col gap-2 animate-in slide-in-from-bottom-4 duration-500">
                  {Array.from({ length: 12 }).map((_, index) => (
                     <MonthColumn
