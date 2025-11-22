@@ -11,7 +11,7 @@ import html2canvas from 'html2canvas';
 // resmin doğrudan linki (genelde .png veya .jpg ile biter) gerekir.
 // Örnek doğru link: https://i.ibb.co/wzwPfxR/logo.png
 // Link hatalı olsa bile aşağıda yazdığım kod otomatik olarak şık bir ikon gösterecektir.
-const LOGO_URL = 'https://ibb.co/zhMFS8v7'; 
+const LOGO_URL = 'https://i.hizliresim.com/ches0mu.png'; 
 
 // Type for view modes
 type ViewMode = 'board' | 'accordion';
