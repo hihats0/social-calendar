@@ -7,10 +7,6 @@ import { subscribeToBirthdays, addBirthdayToCloud, clearAllBirthdays, isSupabase
 import html2canvas from 'html2canvas';
 
 // --- LOGO AYARI ---
-// Not: Verdiğiniz link (ibb.co/...) bir web sayfasıdır. Kodun çalışması için
-// resmin doğrudan linki (genelde .png veya .jpg ile biter) gerekir.
-// Örnek doğru link: https://i.ibb.co/wzwPfxR/logo.png
-// Şimdilik çalışan bir örnek koyuyorum:
 const LOGO_URL = 'https://i.hizliresim.com/ches0mu.png'; 
 
 // Type for view modes
@@ -105,36 +101,37 @@ const App: React.FC = () => {
       setIsDownloading(true);
       
       try {
-          // 1. Ensure we are in board mode for the best screenshot
           const previousMode = viewMode;
           if (previousMode !== 'board') setViewMode('board');
           
-          // 2. Force a small delay to ensure DOM updates and images render
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Force a delay to allow the board view to render fully
+          await new Promise(resolve => setTimeout(resolve, 1200));
 
-          // 3. Capture with specific settings for high quality and full width
           const canvas = await html2canvas(element, {
               scale: 2, // Higher resolution
               backgroundColor: '#f0f4f8',
               useCORS: true, // Critical for external avatars
-              allowTaint: true, // Allow external images
+              allowTaint: true,
               logging: false,
-              width: 1920, // Force desktop width even on mobile
-              windowWidth: 1920, // Simulate desktop viewport
-              imageTimeout: 30000, // Wait longer for images
+              width: 1920, // Force desktop width
+              windowWidth: 1920,
+              imageTimeout: 15000, // Wait 15s for images if needed
               onclone: (clonedDoc) => {
-                  // Force the cloned container to be large to prevent squashing
                   const container = clonedDoc.getElementById('calendar-grid-container');
                   if (container) {
                       container.style.width = '1920px';
-                      container.style.maxWidth = 'none';
                       container.style.padding = '40px';
+                      // Fix font rendering for screenshot
+                      container.style.fontFamily = 'Arial, sans-serif'; 
                   }
-                  // Ensure all images in the clone are eager loaded
-                  const images = clonedDoc.getElementsByTagName('img');
-                  for (let i = 0; i < images.length; i++) {
-                      images[i].loading = "eager";
-                  }
+                  
+                  // CSS Injection to fix text shifting in screenshots
+                  const style = clonedDoc.createElement('style');
+                  style.innerHTML = `
+                    img { display: block !important; } 
+                    span { line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important; }
+                  `;
+                  clonedDoc.head.appendChild(style);
               }
           });
           
@@ -146,7 +143,7 @@ const App: React.FC = () => {
           if (previousMode !== 'board') setViewMode(previousMode);
       } catch (err) {
           console.error("Screenshot failed", err);
-          alert("Could not create screenshot. Some external images might be blocking it.");
+          alert("Could not create screenshot. Please try again.");
       } finally {
           setIsDownloading(false);
       }
@@ -192,7 +189,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen text-slate-800 font-sans pb-20 selection:bg-blue-100">
       
-      {/* Optimized Background: Removed heavy blur animations for performance */}
+      {/* Optimized Background */}
       <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none bg-slate-50/50"></div>
 
       {/* Header */}
