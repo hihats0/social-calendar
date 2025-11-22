@@ -36,6 +36,7 @@ export const UserTooltip: React.FC<UserTooltipProps> = ({ birthday, onClose }) =
         {/* Avatar */}
         <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm mb-2">
           <img 
+            crossOrigin="anonymous"
             src={`https://unavatar.io/twitter/${birthday.handle}`} 
             alt={birthday.name}
             className="w-full h-full rounded-full object-cover bg-slate-100"

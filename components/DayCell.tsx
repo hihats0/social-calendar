@@ -45,6 +45,7 @@ export const DayCell: React.FC<DayCellProps> = React.memo(({ dayIndex, monthInde
                 <div className="flex items-center gap-2 p-1 pr-2 rounded-full bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group/chip w-fit max-w-full">
                     <div className="w-6 h-6 rounded-full ring-1 ring-slate-100 shadow-sm overflow-hidden bg-slate-100 shrink-0">
                         <img
+                          crossOrigin="anonymous"
                           src={`https://unavatar.io/twitter/${b.handle}`}
                           alt={b.name}
                           className="w-full h-full object-cover"

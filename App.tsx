@@ -102,34 +102,45 @@ const App: React.FC = () => {
       
       try {
           const previousMode = viewMode;
-          if (previousMode !== 'board') setViewMode('board');
           
-          // Force a delay to allow the board view to render fully
-          await new Promise(resolve => setTimeout(resolve, 1200));
+          // Force board mode to see everything
+          if (previousMode !== 'board') {
+            setViewMode('board');
+          }
+          
+          // Increased delay to ensure all external images (avatars) are fully loaded
+          // and CORS handshakes are complete
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
           const canvas = await html2canvas(element, {
               scale: 2, // Higher resolution
               backgroundColor: '#f0f4f8',
               useCORS: true, // Critical for external avatars
-              allowTaint: true,
+              allowTaint: false, // MUST be false to allow toDataURL to work
               logging: false,
-              width: 1920, // Force desktop width
+              width: element.scrollWidth, 
+              height: element.scrollHeight,
               windowWidth: 1920,
-              imageTimeout: 15000, // Wait 15s for images if needed
               onclone: (clonedDoc) => {
-                  const container = clonedDoc.getElementById('calendar-grid-container');
-                  if (container) {
-                      container.style.width = '1920px';
-                      container.style.padding = '40px';
-                      // Fix font rendering for screenshot
-                      container.style.fontFamily = 'Arial, sans-serif'; 
-                  }
-                  
-                  // CSS Injection to fix text shifting in screenshots
+                  // CRITICAL FIX: html2canvas struggles with backdrop-filter (glass effect)
+                  // We inject CSS to remove it and set solid backgrounds for the screenshot only
                   const style = clonedDoc.createElement('style');
                   style.innerHTML = `
-                    img { display: block !important; } 
-                    span { line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important; }
+                    .glass-panel, .glass-header {
+                        backdrop-filter: none !important;
+                        -webkit-backdrop-filter: none !important;
+                        background: #ffffff !important;
+                        border: 1px solid #cbd5e1 !important;
+                        box-shadow: none !important;
+                    }
+                    /* Ensure images are block-level to avoid line-height gaps */
+                    img { display: block !important; }
+                    
+                    /* Force visibility */
+                    * { 
+                        opacity: 1 !important; 
+                        visibility: visible !important; 
+                    }
                   `;
                   clonedDoc.head.appendChild(style);
               }
@@ -243,6 +254,7 @@ const App: React.FC = () => {
                                 src={`https://unavatar.io/twitter/${nextBirthday.handle}`} 
                                 className="w-8 h-8 rounded-full border-2 border-white shadow-sm bg-slate-200"
                                 alt={nextBirthday.name}
+                                crossOrigin="anonymous"
                             />
                             <div className="absolute -bottom-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1 rounded-full border border-white">
                                 {nextBirthday.daysAway === 0 ? 'TODAY' : `${nextBirthday.daysAway}d`}
