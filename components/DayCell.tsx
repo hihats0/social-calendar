@@ -30,28 +30,33 @@ export const DayCell: React.FC<DayCellProps> = React.memo(({ dayIndex, monthInde
         {dayIndex}
       </div>
 
-      {/* Content Area - Avatar Grid */}
+      {/* Content Area */}
       <div className="flex-1 relative min-w-0 p-1.5">
         {daysBirthdays.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 items-start justify-start w-full">
+          <div className="flex flex-col gap-1.5 w-full">
             {daysBirthdays.map((b) => (
               <div 
                 key={b.id} 
-                className="relative group/avatar z-0 hover:z-10"
+                className="relative z-0 hover:z-20"
                 onMouseEnter={() => setHoveredId(b.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
-                {/* Avatar Circle - Directly Visible */}
-                <div className="w-9 h-9 rounded-full ring-2 ring-white shadow-sm overflow-hidden bg-slate-100 cursor-pointer transition-transform duration-200 hover:scale-110 hover:shadow-md hover:ring-blue-200">
-                    <img
-                      src={`https://unavatar.io/twitter/${b.handle}`}
-                      alt={b.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${b.name}&background=random&size=64`;
-                      }}
-                    />
+                {/* Chip: Avatar + Name */}
+                <div className="flex items-center gap-2 p-1 pr-2 rounded-full bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group/chip w-fit max-w-full">
+                    <div className="w-6 h-6 rounded-full ring-1 ring-slate-100 shadow-sm overflow-hidden bg-slate-100 shrink-0">
+                        <img
+                          src={`https://unavatar.io/twitter/${b.handle}`}
+                          alt={b.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${b.name}&background=random&size=64`;
+                          }}
+                        />
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-600 truncate group-hover/chip:text-blue-600 transition-colors leading-tight">
+                        {b.name}
+                    </span>
                 </div>
                 
                 {/* Tooltip */}
@@ -61,17 +66,17 @@ export const DayCell: React.FC<DayCellProps> = React.memo(({ dayIndex, monthInde
               </div>
             ))}
             
-            {/* Hidden spacer to allow adding by clicking empty space */}
-            <div 
+            {/* Add button (invisible filler for easy clicking) */}
+             <div 
                onClick={() => onAddClick(dayIndex, monthIndex)}
-               className="flex-grow min-h-[36px] cursor-pointer rounded-md hover:bg-slate-50/50 -z-0"
+               className="flex-grow min-h-[10px] cursor-pointer"
                title="Add another person"
             ></div>
           </div>
         ) : (
           /* Empty state - Fills the rest */
           <div 
-            className="flex-1 w-full h-full cursor-pointer flex items-center justify-center hover:bg-slate-50/80 transition-colors group/empty min-h-[50px]"
+            className="flex-1 w-full h-full cursor-pointer flex items-center justify-center hover:bg-slate-50/80 transition-colors group/empty min-h-[40px]"
             onClick={() => onAddClick(dayIndex, monthIndex)}
           >
              <i className="fas fa-plus text-xs text-slate-200 opacity-0 group-hover/cell:opacity-100 transition-all transform scale-75 group-hover/cell:scale-100"></i>
