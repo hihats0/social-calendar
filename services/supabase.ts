@@ -2,23 +2,23 @@ import { createClient } from '@supabase/supabase-js';
 import { Birthday } from '../types';
 
 // --- SUPABASE AYARLARI ---
-// Lütfen Supabase panelinden (Settings > API) aldığınız kendi bilgilerinizi tırnak içine yapıştırın.
+// Kullanıcı tarafından sağlanan bilgiler girildi.
 
-// 1. Project URL (Örn: https://xxyyzz.supabase.co)
-const SUPABASE_URL: string = 'BURAYA_URL_YAPISTIR';
+// 1. Project URL
+const SUPABASE_URL: string = 'https://lmgjzxlrvqsaawvhbnqh.supabase.co';
 
-// 2. Anon Public Key (eyJh... ile başlayan ÇOK UZUN şifreli yazı)
-// DİKKAT: 'secret' veya 'service_role' key'i ASLA buraya yapıştırma! Sadece 'anon' key.
-const SUPABASE_ANON_KEY: string = 'BURAYA_ANON_KEY_YAPISTIR';
+// 2. Anon Public Key
+// Not: Kullanıcının sağladığı 'sb_publishable_...' anahtarı kullanılıyor.
+const SUPABASE_ANON_KEY: string = 'sb_publishable_Z4tlOgwQIe2H5CbPxLgTFw_4NdsVo3W';
 
 let supabase: any;
 
-// Basit doğrulama: Kullanıcı değerleri girmiş mi?
+// Basit doğrulama: Placeholder kontrolü
 const isConfigured = 
     SUPABASE_URL !== 'BURAYA_URL_YAPISTIR' && 
     SUPABASE_ANON_KEY !== 'BURAYA_ANON_KEY_YAPISTIR' &&
-    SUPABASE_URL.includes('supabase.co') &&
-    SUPABASE_ANON_KEY.length > 20; // Anon keyler genelde uzundur
+    SUPABASE_URL.length > 0 &&
+    SUPABASE_ANON_KEY.length > 0;
 
 if (isConfigured) {
     try {
@@ -49,6 +49,10 @@ export const subscribeToBirthdays = (callback: (data: Birthday[]) => void) => {
     
     if (error) {
       console.error("Supabase Veri Çekme Hatası:", error.message);
+      // Tablo yoksa veya erişim hatası varsa kullanıcıyı uyar
+      if (error.code === 'PGRST301' || error.code === '42P01') {
+        console.warn("İpucu: 'birthdays' tablosunu SQL Editor'de oluşturdunuz mu?");
+      }
     } else if (data) {
       callback(data as Birthday[]);
     }
@@ -74,7 +78,7 @@ export const subscribeToBirthdays = (callback: (data: Birthday[]) => void) => {
 // 3. Ekleme
 export const addBirthdayToCloud = async (birthday: Omit<Birthday, 'id'>) => {
   if (!supabase) {
-    alert("Supabase ayarları yapılmamış! services/supabase.ts dosyasını kontrol et.");
+    alert("Supabase ayarları eksik veya hatalı!");
     return;
   }
   const { error } = await supabase
