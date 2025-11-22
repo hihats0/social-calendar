@@ -4,6 +4,12 @@ import { MONTHS } from './constants';
 import { MonthColumn } from './components/MonthColumn';
 import { AddBirthdayModal } from './components/AddBirthdayModal';
 import { subscribeToBirthdays, addBirthdayToCloud, clearAllBirthdays, isSupabaseConfigured } from './services/supabase';
+import html2canvas from 'html2canvas';
+
+// --- LOGO AYARI ---
+// Buraya kendi logo linkini yapıştır. (ImgBB, HizliResim vb.)
+// Örnek: 'https://i.ibb.co/GtvK0yq/my-logo.png'
+const LOGO_URL = 'https://hizliresim.com/ches0mu'; // Geçici pasta ikonu
 
 // Type for view modes
 type ViewMode = 'board' | 'accordion';
@@ -19,6 +25,7 @@ const App: React.FC = () => {
   const [expandedMonthIndex, setExpandedMonthIndex] = useState<number | null>(null); // For accordion mode
   const [isDbReady, setIsDbReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Initial Setup & Subscription to Cloud
   useEffect(() => {
@@ -87,6 +94,41 @@ const App: React.FC = () => {
         }
     }
   };
+  
+  const handleDownloadScreenshot = async () => {
+      const element = document.getElementById('calendar-grid-container');
+      if (!element) return;
+      
+      setIsDownloading(true);
+      
+      try {
+          // Ensure we are in board mode for the best screenshot
+          const previousMode = viewMode;
+          if (previousMode !== 'board') setViewMode('board');
+          
+          // Wait a tick for render
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          const canvas = await html2canvas(element, {
+              scale: 2, // High resolution
+              backgroundColor: '#f0f4f8',
+              useCORS: true,
+              logging: false
+          });
+          
+          const link = document.createElement('a');
+          link.download = 'Social-Birthday-Calendar.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          
+          if (previousMode !== 'board') setViewMode(previousMode);
+      } catch (err) {
+          console.error("Screenshot failed", err);
+          alert("Could not create screenshot.");
+      } finally {
+          setIsDownloading(false);
+      }
+  };
 
   // --- Logic: Filter Birthdays ---
   const filteredBirthdays = useMemo(() => {
@@ -128,12 +170,8 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen text-slate-800 font-sans pb-20 selection:bg-blue-100">
       
-      {/* Ambient Background */}
-      <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-200/30 rounded-full blur-[120px] mix-blend-multiply"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-200/30 rounded-full blur-[120px] mix-blend-multiply"></div>
-          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-cyan-200/20 rounded-full blur-[80px] mix-blend-multiply animate-pulse"></div>
-      </div>
+      {/* Optimized Background: Removed heavy blur animations for performance */}
+      <div className="fixed inset-0 overflow-hidden -z-10 pointer-events-none bg-slate-50/50"></div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 glass-header px-6 py-3 mb-6 shadow-sm">
@@ -142,16 +180,26 @@ const App: React.FC = () => {
             {/* Left: Logo & Stats */}
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white w-10 h-10 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/20 relative">
-                        <i className="fas fa-calendar-alt"></i>
-                        {isDbReady && <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 border-2 border-white rounded-full" title="Supabase Connected"></div>}
+                    <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md border border-white/50 bg-white">
+                        {/* LOGO IMAGE */}
+                        <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain p-1" />
                     </div>
                     <div>
                         <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-none">
                         Social Calendar
                         </h1>
                         <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-1 flex items-center gap-1">
-                            {isDbReady ? <span className="text-emerald-600"><i className="fas fa-bolt text-[8px]"></i> SUPABASE SYNC</span> : <span className="text-orange-500">LOCAL MODE</span>}
+                            {isDbReady ? (
+                                <span className="text-emerald-600 flex items-center gap-1">
+                                    <span className="relative flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    LIVE CONNECTION
+                                </span>
+                            ) : (
+                                <span className="text-orange-500">LOCAL MODE</span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -179,7 +227,7 @@ const App: React.FC = () => {
                     </div>
                 ) : (
                     <div className="hidden md:block text-xs text-slate-400 italic">
-                        {isLoading ? 'Loading calendar...' : 'No upcoming birthdays set'}
+                        {isLoading ? 'Loading...' : 'No upcoming birthdays'}
                     </div>
                 )}
             </div>
@@ -187,11 +235,11 @@ const App: React.FC = () => {
             {/* Right: Controls */}
             <div className="flex items-center gap-3">
                 {/* Search Bar */}
-                <div className="relative group w-full lg:w-64">
+                <div className="relative group w-full lg:w-56">
                     <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors text-xs"></i>
                     <input 
                         type="text" 
-                        placeholder="Search friends..." 
+                        placeholder="Search..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-slate-100/50 hover:bg-white focus:bg-white border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -204,6 +252,21 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="h-6 w-px bg-slate-200 mx-1"></div>
+
+                {/* Screenshot Button */}
+                <button 
+                    onClick={handleDownloadScreenshot}
+                    disabled={isDownloading}
+                    className="bg-slate-800 text-white hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
+                    title="Download Image"
+                >
+                    {isDownloading ? (
+                        <i className="fas fa-circle-notch fa-spin"></i>
+                    ) : (
+                        <i className="fas fa-camera"></i>
+                    )}
+                    <span className="hidden sm:inline">Save Image</span>
+                </button>
 
                 {/* View Toggle */}
                 <div className="bg-slate-100/80 p-1 rounded-lg flex gap-1 border border-slate-200">
@@ -228,7 +291,7 @@ const App: React.FC = () => {
                     <button 
                         onClick={handleReset}
                         className="ml-2 text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"
-                        title="Clear All Data"
+                        title="Reset All"
                     >
                         <i className="fas fa-trash-alt text-xs"></i>
                     </button>
@@ -242,8 +305,7 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-2 text-orange-700 text-xs">
                     <i className="fas fa-exclamation-triangle"></i>
                     <span>
-                        <strong>Supabase not configured!</strong> Changes are currently only saved to this browser. 
-                        To enable cloud sync, please configure <code>services/supabase.ts</code>.
+                        <strong>Database Disconnected</strong> Changes are only saved to this browser.
                     </span>
                 </div>
              </div>
@@ -251,13 +313,13 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1800px] mx-auto px-6">
+      <main className="max-w-[1800px] mx-auto px-6" id="calendar-grid-container">
         
         {/* Loading State */}
         {isLoading && (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <i className="fas fa-circle-notch fa-spin text-3xl mb-3 text-emerald-500"></i>
-                <p className="text-sm font-medium">Syncing with Supabase...</p>
+                <p className="text-sm font-medium">Loading calendar...</p>
             </div>
         )}
 

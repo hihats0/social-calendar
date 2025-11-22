@@ -9,7 +9,8 @@ interface DayCellProps {
   onAddClick: (day: number, month: number) => void;
 }
 
-export const DayCell: React.FC<DayCellProps> = ({ dayIndex, monthIndex, birthdays, onAddClick }) => {
+// Optimization: React.memo prevents this cell from re-rendering if props haven't changed
+export const DayCell: React.FC<DayCellProps> = React.memo(({ dayIndex, monthIndex, birthdays, onAddClick }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   // Filter birthdays for this specific day
@@ -41,11 +42,12 @@ export const DayCell: React.FC<DayCellProps> = ({ dayIndex, monthIndex, birthday
                 onMouseLeave={() => setHoveredId(null)}
               >
                 {/* Compact Chip */}
-                <div className="group/chip cursor-pointer flex items-center gap-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-100 rounded-full pl-0.5 pr-1.5 py-[1px] hover:scale-105 hover:shadow-sm hover:border-blue-200 transition-all duration-200">
+                <div className="group/chip cursor-pointer flex items-center gap-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-100 rounded-full pl-0.5 pr-1.5 py-[1px] hover:scale-105 hover:border-blue-200 transition-transform duration-100">
                   <img
                     src={`https://unavatar.io/twitter/${b.handle}`}
                     alt={b.name}
                     className="w-4 h-4 rounded-full bg-slate-100 object-cover ring-1 ring-slate-50"
+                    loading="lazy" // Performance optimization
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${b.name}&background=random&size=32`;
                     }}
@@ -88,4 +90,4 @@ export const DayCell: React.FC<DayCellProps> = ({ dayIndex, monthIndex, birthday
       </div>
     </div>
   );
-};
+});

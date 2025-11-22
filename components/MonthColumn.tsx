@@ -12,7 +12,8 @@ interface MonthColumnProps {
   onToggle?: () => void; // Used in accordion mode
 }
 
-export const MonthColumn: React.FC<MonthColumnProps> = ({ 
+// Optimization: React.memo prevents re-rendering entire months unnecessarily
+export const MonthColumn: React.FC<MonthColumnProps> = React.memo(({ 
   monthIndex, 
   birthdays, 
   onAddClick, 
@@ -33,9 +34,10 @@ export const MonthColumn: React.FC<MonthColumnProps> = ({
     <div 
         className={`
             glass-panel rounded-xl overflow-hidden transition-all duration-300 flex flex-col
-            ${isBoard ? 'h-full hover:shadow-xl hover:-translate-y-1' : 'w-full mb-3'}
+            ${isBoard ? 'h-full' : 'w-full mb-3'}
             ${!isBoard && !isOpen ? 'hover:bg-white/80 cursor-pointer' : ''}
         `}
+        // Removed heavy hover shadow/transform effects to fix freezing
         onClick={!isBoard && !isOpen && onToggle ? onToggle : undefined}
     >
       {/* Header */}
@@ -76,9 +78,9 @@ export const MonthColumn: React.FC<MonthColumnProps> = ({
       <div 
         className={`
             flex flex-col bg-white/40
-            transition-[max-height,opacity] duration-500 ease-in-out
-            ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}
+            ${isOpen ? 'opacity-100' : 'hidden opacity-0'}
         `}
+        // Removed complex max-height transition to improve performance
       >
         {daysArray.map((day) => (
           <DayCell
@@ -95,4 +97,4 @@ export const MonthColumn: React.FC<MonthColumnProps> = ({
       </div>
     </div>
   );
-};
+});
